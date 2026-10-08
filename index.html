@@ -185,7 +185,7 @@ function progress(){ return Math.round(((S.i+1)/(Q.length+1))*100); }
 function render(){
   const a = app(); a.innerHTML = "";
   if (S.i === -1) return renderIntro(a);
-  if (S.i >= Q.length) return renderResult(a);
+  if (S.i >= Q.length) return S.done ? renderResult(a) : renderGate(a);
   renderQuestion(a, Q[S.i]);
 }
 
@@ -317,6 +317,28 @@ function answersText(rec){
   ].join("\n");
 }
 
+function formHref(){
+  return FORM_URL + "?" + FORM_FIELD + "=" + encodeURIComponent(answersText(S.rec||""));
+}
+
+function renderGate(a){
+  a.appendChild(el(`
+    <div class="step">Готово</div>
+    <div class="bar"><i style="width:100%"></i></div>
+    <h1>Ваш медиатип определён!</h1>
+    <p>Остался один клик: отправьте ответы медиакоманде — и сразу увидите результат.</p>
+    <div><label for="rec">Кого из коллег нам точно стоит позвать? (необязательно)</label>
+      <input type="text" id="rec" placeholder="Имя, подразделение"></div>
+    <div><a class="btn sendbtn" id="go" href="#" target="_blank" rel="noopener">Отправить и узнать результат</a></div>
+    <p class="note">Откроется форма, где ваш ответ уже заполнен, — нажмите в ней «Отправить» и возвращайтесь сюда за результатом.</p>
+    <div class="foot">Транспортная логистика НТК</div>`));
+  const go = a.querySelector("#go"), rec = a.querySelector("#rec");
+  const upd = () => { S.rec = rec.value.trim(); go.href = formHref(); };
+  rec.oninput = upd;
+  upd();
+  go.addEventListener("click", () => { S.done = true; setTimeout(render, 120); });
+}
+
 function renderResult(a){
   const t = computeType(), T = TYPES[t.key];
   a.appendChild(el(`
@@ -330,18 +352,11 @@ function renderResult(a){
       <p style="margin-top:12px">${T.desc}</p>
     </div>
     <div class="card sendcard">
-      <p class="sendtitle">Остался один шаг</p>
-      <div><label for="rec">Кого из коллег нам точно стоит позвать? (необязательно)</label>
-        <input type="text" id="rec" placeholder="Имя, подразделение"></div>
-      <p class="note">Нажмите кнопку — откроется форма, где ваш ответ уже заполнен. Останется нажать в ней «Отправить».</p>
-      <a class="btn sendbtn" id="send" href="#" target="_blank" rel="noopener">Отправить ответ</a>
+      <p class="note">Форма с вашим ответом открылась в соседней вкладке — если ещё не нажали в ней «Отправить», сделайте это сейчас. Вкладка не открылась?
+        <a id="again" href="${formHref()}" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700">Открыть форму ещё раз</a></p>
     </div>
     <p class="note">Спасибо! Если появится подходящая тема, мы напишем вам и предложим — решение всегда за вами, и любой материал вы увидите до публикации.</p>
     <div class="foot">Транспортная логистика НТК</div>`));
-  const send = a.querySelector("#send"), rec = a.querySelector("#rec");
-  const upd = () => send.href = FORM_URL + "?" + FORM_FIELD + "=" + encodeURIComponent(answersText(rec.value.trim()));
-  rec.oninput = upd;
-  upd();
 }
 render();
 </script>
